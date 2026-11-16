@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Nad Parsętą — rejestr połowów i zezwoleń.">
+  <meta name="theme-color" content="#22302A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Nad Parsętą">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="manifest" href="manifest.json">
+  <title>Nad Parsętą</title>
+  <style>html,body{margin:0;background:#E9ECE6;color:#101412}#boot{padding:32px;font:20px sans-serif}noscript{display:block;padding:24px}</style>
+</head>
+<body>
+  <div id="boot" role="status">Wczytywanie Nad Parsętą…</div>
+  <noscript>Aplikacja wymaga JavaScript.</noscript>
+  <script>window.addEventListener('flutter-first-frame',()=>{document.getElementById('boot')?.remove();if('serviceWorker' in navigator){navigator.serviceWorker.ready.then(reg=>reg.active?.postMessage('downloadOffline')).catch(()=>{});}});</script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

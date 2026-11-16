@@ -1,0 +1,56 @@
+name: nad_parseta
+description: Mobilny POC rejestru połowów dorzecza Parsęty.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  geolocator: ^14.0.2
+  image_picker: 1.2.1
+  video_player: 2.10.0
+  inspection_protocol:
+    path: ../inspection_protocol
+  cupertino_icons: 1.0.8
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: 2.6.1
+  flutter_secure_storage: 9.2.4
+  shared_preferences: 2.5.3
+  http: 1.6.0
+  connectivity_plus: 6.1.5
+  qr_flutter: 4.1.0
+  url_launcher: 6.3.1
+  uuid: 4.5.3
+  intl: any
+  firebase_core: 3.13.0
+  firebase_messaging: 15.2.5
+  web: 1.1.1
+  cbor: 6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 5.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/fish/
+  fonts:
+    - family: SofiaSans
+      fonts:
+        - asset: assets/fonts/SofiaSans-600.ttf
+          weight: 600
+        - asset: assets/fonts/SofiaSans-700.ttf
+          weight: 700
+        - asset: assets/fonts/SofiaSans-800.ttf
+          weight: 800
+    - family: SofiaSansCondensed
+      fonts:
+        - asset: assets/fonts/SofiaSansCondensed-800.ttf
+          weight: 800

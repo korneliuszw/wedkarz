@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "648564206410",
+    "project_id": "nad-parseta",
+    "storage_bucket": "nad-parseta.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:648564206410:android:361193805a6d5e9113efb3",
+        "android_client_info": {
+          "package_name": "pl.parseta.nad_parseta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwWLvDp1WVb4Ww-DxCvwbQYNhb1VLLHds"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

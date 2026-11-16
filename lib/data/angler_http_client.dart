@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -36,7 +36,7 @@ class AnglerHttpClient {
     }
   }
 
-  final http.Client _client;
+  final Dio _client;
   final Uri _base;
   final SharedPreferences _preferences;
 
@@ -59,26 +59,36 @@ class AnglerHttpClient {
       path: '${_base.path.replaceFirst(RegExp(r'/$'), '')}/v1/$path',
       queryParameters: query,
     );
-    final request = http.Request(method, uri)
-      ..followRedirects = false
-      ..headers.addAll({
-        'accept': 'application/json',
-        'x-device-id': device,
-        if (kDebugMode && const bool.fromEnvironment('PINGGY_DEV_TUNNEL'))
-          'x-pinggy-no-screen': '1',
-        if (session != null) 'authorization': 'Bearer ${session.accessToken}',
-        if (body != null) 'content-type': 'application/json',
-      });
-    if (body != null) request.body = jsonEncode(body);
-    late final http.Response response;
+    final cancelToken = CancelToken();
+    late final Response<List<int>> response;
     try {
       response = await _client
-          .send(request)
-          .then(http.Response.fromStream)
+          .requestUri<List<int>>(
+            uri,
+            data: body,
+            cancelToken: cancelToken,
+            options: Options(
+              method: method,
+              followRedirects: false,
+              validateStatus: (_) => true,
+              responseType: ResponseType.bytes,
+              contentType: body == null ? null : Headers.jsonContentType,
+              headers: {
+                'accept': 'application/json',
+                'x-device-id': device,
+                if (kDebugMode &&
+                    const bool.fromEnvironment('PINGGY_DEV_TUNNEL'))
+                  'x-pinggy-no-screen': '1',
+                if (session != null)
+                  'authorization': 'Bearer ${session.accessToken}',
+              },
+            ),
+          )
           .timeout(const Duration(seconds: 15));
     } on TimeoutException {
+      cancelToken.cancel();
       throw const DomainFailure(FailureCode.offline);
-    } on http.ClientException {
+    } on DioException {
       throw const DomainFailure(FailureCode.offline);
     }
     switch (response.statusCode) {
@@ -86,7 +96,7 @@ class AnglerHttpClient {
         return {};
       case 200:
       case 201:
-        return jsonDecode(utf8.decode(response.bodyBytes)) as Json;
+        return jsonDecode(utf8.decode(response.data!)) as Json;
       case 401:
         throw AuthFailure(
           path == 'auth/sessions'

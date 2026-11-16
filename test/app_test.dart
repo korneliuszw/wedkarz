@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,9 +14,6 @@ import 'package:nad_parseta/application/providers.dart';
 import 'package:nad_parseta/core/theme.dart';
 import 'package:nad_parseta/core/widgets.dart';
 import 'package:nad_parseta/data/local_store.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
-import 'package:nad_parseta/data/angler_api.dart';
 import 'package:nad_parseta/domain/models.dart';
 import 'package:nad_parseta/features/fishing/fishing_screen.dart';
 import 'package:nad_parseta/features/fishing/new_fishing_place_screen.dart';
@@ -63,11 +62,27 @@ class TestNetworkController extends NetworkController {
   void goOffline() => state = const NetworkStatus(connected: false);
 }
 
+class TestHttpAdapter implements HttpClientAdapter {
+  TestHttpAdapter(this.onRequest);
+
+  final Future<ResponseBody> Function(RequestOptions) onRequest;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) => onRequest(options);
+
+  @override
+  void close({bool force = false}) {}
+}
+
 Future<ProviderContainer> createContainer({
   MemorySnapshotStore? store,
   MemorySessionStore? auth,
   Future<Position> Function()? locate,
-  Future<http.Response> Function(http.Request)? onRequest,
+  Future<ResponseBody> Function(RequestOptions)? onRequest,
   String url = testApiUrl,
 }) async {
   SharedPreferences.setMockInitialValues({});
@@ -87,12 +102,13 @@ Future<ProviderContainer> createContainer({
       ),
     ],
   );
-  final client = MockClient((request) async {
-    final resource = request.url.path;
+  final adapter = TestHttpAdapter((request) async {
+    final resource = request.uri.path;
     if (resource == '/v1/auth/sessions') {
-      final body = jsonDecode(request.body) as Json;
-      if (body['accountNumber'] != 1001) return http.Response('', 401);
-      if (body['password'] != 'test-password') return http.Response('', 401);
+      final body = request.data as Json;
+      if (body['accountNumber'] != 1001 || body['password'] != 'test-password') {
+        return ResponseBody.fromString('', 401);
+      }
     }
     final response = switch (resource) {
       '/v1/auth/sessions' || '/v1/auth/refresh' => {
@@ -123,7 +139,7 @@ Future<ProviderContainer> createContainer({
       if (onRequest != null) return onRequest(request);
       throw StateError('Unexpected request: ${request.method} $resource');
     }
-    return http.Response.bytes(utf8.encode(jsonEncode(response)), 200);
+    return ResponseBody.fromString(jsonEncode(response), 200);
   });
   return ProviderContainer(
     overrides: [
@@ -131,10 +147,7 @@ Future<ProviderContainer> createContainer({
       sessionStoreProvider.overrideWithValue(auth ?? MemorySessionStore()),
       snapshotStoreProvider.overrideWithValue(snapshotStore),
       anglerApiUrlProvider.overrideWithValue(url),
-      anglerApiProvider.overrideWith((ref) {
-        ref.onDispose(client.close);
-        return AnglerApi(client, preferences, url: url);
-      }),
+      anglerHttpAdapterFactoryProvider.overrideWithValue(() => adapter),
       speciesProvider.overrideWith((ref) => [testSpecies]),
       networkProvider.overrideWith((ref) => TestNetworkController()),
       if (locate != null)
@@ -184,19 +197,19 @@ void main() {
         store: store,
         auth: auth,
         onRequest: (request) async {
-          requests.add(request.url.path);
-          final body = jsonDecode(request.body) as Json;
+          requests.add(request.uri.path);
+          final body = request.data as Json;
           final time = DateTime.now().toIso8601String();
-          if (request.url.path == '/v1/fishing-sessions') {
-            return http.Response(
+          if (request.uri.path == '/v1/fishing-sessions') {
+            return ResponseBody.fromString(
               jsonEncode({'id': body['id'], 'receivedAt': time}),
               201,
             );
           }
           expect(request.method, 'PUT');
           expect(body['base64'], photo);
-          if (failPhoto) return http.Response('', 503);
-          return http.Response(
+          if (failPhoto) return ResponseBody.fromString('', 503);
+          return ResponseBody.fromString(
             jsonEncode({'clientId': 'photo-fish', 'receivedAt': time}),
             200,
           );

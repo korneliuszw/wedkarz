@@ -20,7 +20,8 @@ dependencies:
   flutter_riverpod: 2.6.1
   flutter_secure_storage: 9.2.4
   shared_preferences: 2.5.3
-  http: 1.6.0
+  dio: ^5.8.0+1
+  native_dio_adapter: 1.5.1
   connectivity_plus: 6.1.5
   qr_flutter: 4.1.0
   url_launcher: 6.3.1

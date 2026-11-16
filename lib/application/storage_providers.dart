@@ -1,9 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nad_parseta/data/angler_api.dart';
 import 'package:nad_parseta/data/local_store.dart';
+
+import '../data/angler_http_adapter.dart'
+    if (dart.library.io) '../data/angler_http_adapter_native.dart';
 
 final anglerApiUrlProvider = Provider<String>((ref) => apiUrl);
 
@@ -24,9 +27,14 @@ final snapshotStoreProvider = Provider<SnapshotStore>(
     apiNamespace: ref.watch(anglerApiUrlProvider),
   ),
 );
+final anglerHttpAdapterFactoryProvider = Provider<HttpClientAdapter Function()>(
+  (ref) => createAnglerHttpAdapter,
+);
+
 final anglerApiProvider = Provider<AnglerApi>((ref) {
   final url = ref.watch(anglerApiUrlProvider);
-  final client = http.Client();
-  ref.onDispose(client.close);
+  final client = Dio()
+    ..httpClientAdapter = ref.watch(anglerHttpAdapterFactoryProvider)();
+  ref.onDispose(() => client.close(force: true));
   return AnglerApi(client, ref.watch(preferencesProvider), url: url);
 });

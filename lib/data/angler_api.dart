@@ -1,4 +1,4 @@
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/models.dart';
@@ -11,11 +11,8 @@ export '../features/fishing/repository/catch_history.dart'
 export 'angler_http_client.dart' show apiUrl;
 
 class AnglerApi implements AuthenticationService {
-  AnglerApi(
-    http.Client client,
-    SharedPreferences preferences, {
-    String url = apiUrl,
-  }) : _http = AnglerHttpClient(client, preferences, url: url);
+  AnglerApi(Dio client, SharedPreferences preferences, {String url = apiUrl})
+    : _http = AnglerHttpClient(client, preferences, url: url);
 
   final AnglerHttpClient _http;
 
